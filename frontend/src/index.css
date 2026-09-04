@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #f7f7f5;
+  color: #1f2124;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.app-card {
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid #e4e4e1;
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.app-card h1 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+
+.app-card p {
+  line-height: 1.5;
+  color: #4a4d52;
+}
+
+.app-hint code {
+  background: #f0f0ee;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}

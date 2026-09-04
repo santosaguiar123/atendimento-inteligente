@@ -1,0 +1,12 @@
+# Framework web e API REST
+Django==5.0.6
+djangorestframework==3.15.2
+
+# Driver PostgreSQL
+psycopg2-binary==2.9.9
+
+# Carregamento de variáveis de ambiente a partir do .env
+python-dotenv==1.0.1
+
+# CORS entre frontend (porta 5173) e backend (porta 8000) em desenvolvimento
+django-cors-headers==4.4.0

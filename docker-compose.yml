@@ -1,0 +1,54 @@
+# Orquestra os três componentes descritos em docs/architecture.md: banco, backend
+# e frontend, para desenvolvimento local. Não é uma configuração de produção
+# (ver docs/roadmap.md, Fase 9, para o que muda em produção).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-atendimento}
+      POSTGRES_USER: ${POSTGRES_USER:-atendimento}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-atendimento}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-atendimento}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Dentro da rede do Docker Compose, o backend fala com o banco pelo nome
+      # do serviço ("db"), não por localhost.
+      POSTGRES_HOST: db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

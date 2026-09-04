@@ -1,0 +1,40 @@
+# --- Python / Django ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+db.sqlite3
+staticfiles/
+media/
+
+# --- Node / React ---
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+
+# --- Ambiente / segredos ---
+.env
+.env.*
+!.env.example
+
+# --- Docker ---
+# (nenhum arquivo específico a ignorar além dos já cobertos acima)
+
+# --- IDEs / SO ---
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Testes / cobertura ---
+.pytest_cache/
+htmlcov/
+.coverage
+
+# documentação pessoal / planejamento inicial
+docs/
