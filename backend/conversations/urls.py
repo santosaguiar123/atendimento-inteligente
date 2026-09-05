@@ -1,16 +1,18 @@
 from django.urls import path
 
+from .views import ConversationCreateView, MessageListCreateView
+
 app_name = "conversations"
 
 urlpatterns = [
-    # TODO (Fase 5): path(
-    #     "public/companies/<slug:slug>/conversations/",
-    #     ConversationCreateView.as_view(),
-    #     name="create",
-    # )
-    # TODO (Fase 5/7): path(
-    #     "conversations/<uuid:pk>/messages/",
-    #     MessageListCreateView.as_view(),
-    #     name="messages",
-    # )
+    path(
+        "public/companies/<slug:slug>/conversations/",
+        ConversationCreateView.as_view(),
+        name="create",
+    ),
+    path(
+        "conversations/<str:conversation_id>/messages/",
+        MessageListCreateView.as_view(),
+        name="messages",
+    ),
 ]

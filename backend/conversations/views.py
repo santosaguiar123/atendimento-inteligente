@@ -1,20 +1,49 @@
-"""
-Views do app conversations.
+import uuid
 
-TODO (Fases 5 e 7 do roadmap — ver docs/roadmap.md):
-Implementar aqui os endpoints descritos em docs/api.md ("Canal público de
-atendimento"):
+from rest_framework import generics
+from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.permissions import AllowAny
 
-    POST /api/public/companies/{slug}/conversations/  -> criar conversa
-    GET  /api/conversations/{id}/messages/             -> listar mensagens
-    POST /api/conversations/{id}/messages/             -> enviar mensagem do
-                                                           cliente e obter resposta
-                                                           da IA (ver ai/services.py)
+from companies.models import Company
 
-Fluxo esperado ao criar uma mensagem (ver docs/architecture.md, seção 4):
-1. Validar e salvar a mensagem do cliente (sender=CUSTOMER).
-2. Montar o contexto (Company.ai_context + histórico recente da conversa).
-3. Chamar `ai.services.get_ai_response(...)`.
-4. Salvar a resposta como uma nova Message (sender=AI).
-5. Retornar ambas (ou a resposta da IA) na response.
-"""
+from .models import Conversation, Message
+from .serializers import ConversationSerializer, MessageSerializer
+
+
+class ConversationCreateView(generics.CreateAPIView):
+    serializer_class = ConversationSerializer
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        try:
+            company = Company.objects.get(slug=self.kwargs["slug"])
+        except Company.DoesNotExist as exc:
+            raise NotFound("Empresa não encontrada.") from exc
+        serializer.save(company=company)
+
+
+class MessageListCreateView(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [AllowAny]
+
+    def get_conversation(self):
+        try:
+            conversation_id = uuid.UUID(self.kwargs["conversation_id"])
+        except (ValueError, AttributeError) as exc:
+            raise ValidationError({"detail": "ID de conversa inválido."}) from exc
+
+        try:
+            return Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist as exc:
+            raise NotFound("Conversa não encontrada.") from exc
+
+    def get_queryset(self):
+        return Message.objects.filter(
+            conversation=self.get_conversation()
+        ).order_by("created_at")
+
+    def perform_create(self, serializer):
+        serializer.save(
+            conversation=self.get_conversation(),
+            sender=Message.Sender.CUSTOMER,
+        )

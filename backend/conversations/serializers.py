@@ -4,13 +4,17 @@ from .models import Conversation, Message
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    content = serializers.CharField(allow_blank=True, trim_whitespace=True)
+
     class Meta:
         model = Message
         fields = ["id", "sender", "content", "created_at"]
         read_only_fields = ["id", "sender", "created_at"]
-        # 'sender' é read-only aqui porque, na criação (Fase 5/7), quem define o
-        # sender é a view (mensagem recebida = CUSTOMER; mensagem gerada = AI),
-        # nunca o cliente da API.
+
+    def validate_content(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("O conteúdo da mensagem não pode estar vazio.")
+        return value
 
 
 class ConversationSerializer(serializers.ModelSerializer):
