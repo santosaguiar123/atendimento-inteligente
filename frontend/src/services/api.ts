@@ -12,12 +12,10 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8000/api",
 });
 
-// TODO (Fase 6 do roadmap): adicionar um interceptor que injeta o header
-// "Authorization: Token <token>" em toda requisição, lendo o token salvo após o
-// login (ver docs/api.md, seção "Autenticação").
-//
-// api.interceptors.request.use((config) => {
-//   const token = localStorage.getItem("auth_token");
-//   if (token) config.headers.Authorization = `Token ${token}`;
-//   return config;
-// });
+export const AUTH_TOKEN_STORAGE_KEY = "auth_token";
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  if (token) config.headers.set("Authorization", `Token ${token}`);
+  return config;
+});

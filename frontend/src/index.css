@@ -41,3 +41,73 @@ body {
   border-radius: 4px;
   font-size: 0.9em;
 }
+
+.login-form {
+  display: grid;
+  gap: 12px;
+}
+
+.login-form input {
+  border: 1px solid #c9c9c5;
+  border-radius: 4px;
+  font: inherit;
+  padding: 10px 12px;
+}
+
+button {
+  border: 0;
+  border-radius: 4px;
+  background: #1f2124;
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  padding: 10px 16px;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.form-error {
+  color: #b42318 !important;
+  margin: 0;
+}
+
+.content-card {
+  width: min(720px, 100%);
+  max-width: 720px;
+}
+
+.page-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.data-form {
+  display: grid;
+  gap: 12px;
+}
+
+.data-form input,
+.data-form textarea,
+select {
+  border: 1px solid #c9c9c5;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.message-list {
+  border-block: 1px solid #e4e4e1;
+  margin-block: 20px;
+  padding-block: 8px;
+}
+
+.message-list article + article {
+  border-top: 1px solid #e4e4e1;
+}
