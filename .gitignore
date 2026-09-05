@@ -39,3 +39,6 @@ htmlcov/
 # documentação pessoal / planejamento inicial
 docs/
 output/
+
+# Arquivos de contexto (não versionar)
+PROJECT_CONTEXT.md
