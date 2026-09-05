@@ -46,8 +46,13 @@ class Company(models.Model):
     def save(self, *args, **kwargs):
         # Gera o slug a partir do nome apenas na criação (ou se ainda não existir),
         # para não quebrar o link público do canal se o nome for editado depois.
-        # TODO (Fase 4): tratar colisão de slug (dois nomes iguais) de forma mais
-        # robusta, ex.: anexar um sufixo numérico/aleatório quando já existir.
         if not self.slug:
-            self.slug = slugify(self.name)[:170]
+            base_slug = slugify(self.name)[:170] or "company"
+            candidate = base_slug
+            suffix = 2
+            while Company.objects.filter(slug=candidate).exists():
+                suffix_text = f"-{suffix}"
+                candidate = f"{base_slug[:170 - len(suffix_text)]}{suffix_text}"
+                suffix += 1
+            self.slug = candidate
         super().save(*args, **kwargs)
