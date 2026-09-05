@@ -1,26 +1,48 @@
-"""
-Views do app users.
-
-TODO (Fase 3 do roadmap): implementar as views de registro e login descritas em
-docs/api.md:
-
-    POST /api/auth/register/   -> cria um usuário (AllowAny)
-    POST /api/auth/login/      -> autentica e retorna um Token (AllowAny)
-
-Dica de implementação: para login, o DRF já oferece
-`rest_framework.authtoken.views.ObtainAuthToken` como ponto de partida — vale
-estudar o código-fonte dele antes de decidir se você o reusa ou escreve o seu.
-"""
+"""Views de autenticação e diagnóstico do app users."""
+from django.contrib.auth import authenticate
+from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
+
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = authenticate(
+            request=request,
+            email=serializer.validated_data["email"],
+            password=serializer.validated_data["password"],
+        )
+        if user is None:
+            return Response(
+                {"detail": "E-mail ou senha inválidos."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({"token": token.key}, status=status.HTTP_200_OK)
+
 
 class PingView(APIView):
-    """
-    Endpoint simples e já funcional, sem autenticação, útil para validar que o
-    backend está de pé (ver README.md, seção 'Como executar localmente').
-    """
+    """Endpoint público usado para verificar se o backend está disponível."""
 
     permission_classes = [AllowAny]
 

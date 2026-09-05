@@ -1,11 +1,11 @@
 from django.urls import path
 
-from .views import PingView
+from .views import LoginView, PingView, RegisterView
 
 app_name = "users"
 
 urlpatterns = [
     path("ping/", PingView.as_view(), name="ping"),
-    # TODO (Fase 3): path("register/", RegisterView.as_view(), name="register")
-    # TODO (Fase 3): path("login/", LoginView.as_view(), name="login")
+    path("register/", RegisterView.as_view(), name="register"),
+    path("login/", LoginView.as_view(), name="login"),
 ]
