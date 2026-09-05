@@ -36,9 +36,9 @@ Thumbs.db
 htmlcov/
 .coverage
 
-# documentação pessoal / planejamento inicial
-docs/
+# artefatos locais
 output/
+docs/
 
-# Arquivos de contexto (não versionar)
+# Contexto operacional do projeto (não versionar)
 PROJECT_CONTEXT.md

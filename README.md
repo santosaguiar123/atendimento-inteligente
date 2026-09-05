@@ -1,228 +1,177 @@
 # Atendimento Inteligente
 
-Plataforma web onde uma empresa cadastra informações sobre o próprio negócio e
-disponibiliza um canal de atendimento em que clientes conversam com uma IA
-treinada com esse contexto — reduzindo o volume de perguntas repetitivas
-respondidas manualmente.
+Plataforma web de atendimento automatizado para pequenas e médias empresas. O
+administrador cadastra o contexto do negócio e disponibiliza um canal público no
+qual clientes conversam com um assistente de IA preparado para responder perguntas
+recorrentes.
 
-> Projeto pessoal em desenvolvimento, construído como exercício de arquitetura de
-> software real (planejamento → modelagem → API → frontend/backend → containers →
-> deploy), não apenas de código.
+Projeto em desenvolvimento, usado como exercício prático de arquitetura, API REST,
+frontend, persistência, testes, containers e integração com IA.
 
-## Status
+## Estado atual
 
-🚧 **Em desenvolvimento.** Este repositório contém a fundação do projeto: estrutura,
-configuração, modelos de dados e documentação. A implementação das funcionalidades
-está em andamento — acompanhe o progresso em [`docs/roadmap.md`](docs/roadmap.md).
+O backend do fluxo anterior à IA já está funcional:
+
+- ambiente local com PostgreSQL, Django e Vite via Docker Compose;
+- registro e login do administrador por token;
+- criação, listagem e edição de empresas, isoladas por proprietário;
+- consulta pública de empresa por slug, sem exposição do contexto interno;
+- criação de conversas e listagem/criação de mensagens do cliente;
+- migrations aplicadas e sem alterações pendentes;
+- 17 testes automatizados passando;
+- verificação do Django, build e lint do frontend passando.
+
+O próximo marco é concluir a Fase 5: conectar o envio de mensagens à camada de IA e
+persistir a resposta automática. O frontend ainda é a tela inicial da fundação. As
+tarefas restantes estão em [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Problema e objetivo
 
-Pequenos negócios recebem, todo dia, as mesmas perguntas (horário, formas de
-pagamento, prazos, políticas). Responder isso manualmente é repetitivo e depende de
-quem está de plantão. O objetivo desta plataforma é automatizar essa camada de
-atendimento com um assistente de IA que usa o contexto cadastrado pela própria
-empresa — sem precisar treinar um modelo próprio.
+Pequenos negócios recebem diariamente as mesmas perguntas: horários, formas de
+pagamento, prazos e políticas. A plataforma automatiza essa primeira camada usando
+o contexto cadastrado pela empresa, sem exigir o treino de um modelo próprio.
 
-Documentação completa do problema, público-alvo e requisitos:
-[`docs/requirements.md`](docs/requirements.md).
+O MVP não pretende substituir definitivamente o atendimento humano. Seu foco é
+validar um canal para perguntas frequentes que possa evoluir para um modelo híbrido.
+Consulte [`docs/requirements.md`](docs/requirements.md).
 
 ## Escopo do MVP
 
-**Entra na primeira versão:**
-- Cadastro e login de administrador.
-- Cadastro de empresa com informações de contexto para a IA.
-- Canal público de atendimento por empresa (link único).
-- Conversa entre cliente e IA, persistida no banco.
+Incluído:
 
-**Fica para depois** (ver [`docs/roadmap.md`](docs/roadmap.md), Fase 11):
-atendentes humanos, dashboard com analytics, múltiplos administradores por empresa,
-notificações, integrações externas, CI/CD.
+- cadastro e login de administrador;
+- cadastro e edição de empresas com contexto para a IA;
+- canal público identificado por slug;
+- conversa entre cliente e IA com persistência no banco;
+- ambiente local reproduzível com Docker Compose.
+
+Atendimento humano, analytics, múltiplos administradores, notificações, integrações
+externas e billing ficam fora do MVP.
 
 ## Stack
 
-| Camada | Tecnologia | Por quê |
-|---|---|---|
-| Backend | Python + Django + Django REST Framework | produtivo para APIs REST, ORM e autenticação maduros |
-| Banco de dados | PostgreSQL | banco relacional robusto, domínio naturalmente relacional |
-| Frontend | React + TypeScript (Vite) | tipagem estática ajuda a manter o contrato com a API; padrão de mercado |
-| Comunicação | HTTP / REST / JSON | contrato simples e bem documentado (`docs/api.md`) |
-| Containers | Docker + Docker Compose | ambiente de desenvolvimento reproduzível, sem orquestração desnecessária |
-| IA | Provider plugável via interface própria | permite trocar de provedor sem reescrever regra de negócio |
+| Camada | Tecnologia |
+|---|---|
+| Backend | Python 3.12, Django 5 e Django REST Framework |
+| Banco | PostgreSQL 16 |
+| Frontend | React 18, TypeScript e Vite 5 |
+| Comunicação | HTTP, REST e JSON |
+| Ambiente | Docker e Docker Compose |
+| IA | interface própria com provider substituível |
 
-Justificativa completa de cada decisão em [`docs/architecture.md`](docs/architecture.md).
+As decisões estão explicadas em [`docs/architecture.md`](docs/architecture.md).
 
-**Por que TypeScript em vez de JavaScript?** O custo de aprendizado extra vindo de
-JavaScript é pequeno, e o ganho é real: como o frontend consome uma API definida por
-contrato (`docs/api.md`), tipar as respostas faz o editor avisar imediatamente se o
-frontend e o backend saírem de sincronia — um problema comum em projetos reais. Além
-disso, é o padrão predominante em vagas e projetos de portfólio profissionais.
+## Arquitetura
 
-## Arquitetura (visão geral)
-
-```
-Cliente (navegador)
-   │
-   ▼
-React (frontend, porta 5173)
-   │  HTTP / REST / JSON
-   ▼
-Django REST Framework (backend, porta 8000)
-   │  Django ORM
-   ▼
+```text
+React + TypeScript (porta 5173)
+        | HTTP / REST / JSON
+        v
+Django REST Framework (porta 8000)
+        | Django ORM
+        v
 PostgreSQL (porta 5432)
-   │
-   ▼
-Provedor de IA (interface própria — stub no MVP, plugável no futuro)
+
+Django -> camada ai -> provider stub ou provider externo
 ```
 
-Monólito modular, de propósito: sem microsserviços, sem Kubernetes, sem fila de
-mensagens. Ver a justificativa completa e os diagramas detalhados em
-[`docs/architecture.md`](docs/architecture.md).
+É um monólito modular, sem microsserviços, Kubernetes ou fila no MVP.
 
-## Estrutura do repositório
+## Estrutura
 
-```
+```text
 atendimento-inteligente/
-├── backend/                 # Django + DRF (API REST)
-│   ├── config/               # settings, urls raiz, wsgi/asgi
-│   ├── users/                 # usuário/administrador customizado
-│   ├── companies/             # empresas cadastradas
-│   ├── conversations/         # conversas e mensagens
-│   ├── ai/                    # abstração do provedor de IA
-│   ├── manage.py
-│   └── requirements.txt
-├── frontend/                 # React + TypeScript (Vite)
-│   └── src/
-│       ├── pages/              # telas roteadas
-│       ├── components/         # componentes reutilizáveis
-│       ├── services/           # cliente HTTP (Axios)
-│       ├── hooks/               # hooks customizados
-│       ├── context/             # estado global leve (ex.: autenticação)
-│       └── types/                # tipos TS espelhando o contrato da API
-├── docs/                     # planejamento e decisões arquiteturais
-│   ├── requirements.md
-│   ├── architecture.md
-│   ├── database.md
-│   ├── api.md
-│   ├── roadmap.md
-│   └── development-guide.md   # guia de estudo durante o desenvolvimento
+├── backend/
+│   ├── config/            # configuração e rotas raiz
+│   ├── users/             # usuário, registro e login
+│   ├── companies/         # empresas e canal público
+│   ├── conversations/     # conversas e mensagens
+│   └── ai/                # abstração do provider
+├── frontend/src/          # interface, serviços e tipos
+├── docs/                  # documentação do produto e do código
 ├── docker-compose.yml
-├── .env.example
-└── .gitignore
+└── .env.example
 ```
-
-Cada pasta existe por um motivo específico — nada foi criado "porque é padrão".
-Ver a justificativa de cada app do backend e pasta do frontend em
-[`docs/architecture.md`](docs/architecture.md) (seções 5 e 6, no corpo do documento
-de arquitetura) e um mapa prático de navegação em
-[`docs/development-guide.md`](docs/development-guide.md).
 
 ## Como executar localmente
 
-### Pré-requisitos
-- Docker e Docker Compose instalados.
-- (Alternativa sem Docker) Python 3.12+, Node.js 20+ e um PostgreSQL local.
+Pré-requisitos: Docker com Docker Compose. Para rodar sem containers, use Python
+3.12+, Node.js 20+ e PostgreSQL.
 
-### 1. Configurar variáveis de ambiente
+1. Crie a configuração local:
 
-```bash
-cp .env.example .env
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-Abra o `.env` e ajuste `DJANGO_SECRET_KEY` e `POSTGRES_PASSWORD` (os valores padrão
-servem apenas para desenvolvimento local, nunca para produção).
+   No PowerShell: `Copy-Item .env.example .env`.
 
-### 2. Subir o ambiente com Docker Compose
+2. Ajuste `DJANGO_SECRET_KEY` e `POSTGRES_PASSWORD`.
 
-```bash
-docker compose up --build
-```
+3. Suba e prepare o ambiente:
 
-Isso sobe três serviços: `db` (PostgreSQL), `backend` (Django, porta 8000) e
-`frontend` (Vite, porta 5173).
+   ```bash
+   docker compose up --build
+   docker compose exec backend python manage.py migrate
+   ```
 
-### 3. Rodar as migrations
+4. Opcionalmente, crie um superusuário:
 
-Os models já existem no código, mas as migrations ainda **não** foram geradas neste
-repositório (ver nota na seção "Validação" abaixo). Em outro terminal, com os
-containers no ar:
+   ```bash
+   docker compose exec backend python manage.py createsuperuser
+   ```
 
-```bash
-docker compose exec backend python manage.py makemigrations
-docker compose exec backend python manage.py migrate
-```
+Acessos locais:
 
-### 4. Criar um superusuário (opcional, para acessar o Django Admin)
-
-```bash
-docker compose exec backend python manage.py createsuperuser
-```
-
-### 5. Acessar
-
-- Frontend: http://localhost:5173
+- frontend: http://localhost:5173
 - API: http://localhost:8000/api/
-- Endpoint de verificação (já funcional, sem autenticação): http://localhost:8000/api/auth/ping/
+- diagnóstico: http://localhost:8000/api/auth/ping/
 - Django Admin: http://localhost:8000/admin/
 
-### Rodando sem Docker (alternativa)
+### Sem Docker
 
 ```bash
-# Backend
+# backend
 cd backend
-python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+python -m venv .venv
+# Linux/macOS: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
 
-# Frontend (em outro terminal)
+# frontend, em outro terminal
 cd frontend
 npm install
 npm run dev
 ```
 
-Neste caso, ajuste `POSTGRES_HOST=localhost` no `.env` (em vez de `db`) e garanta
-que exista um PostgreSQL rodando localmente com as credenciais do `.env`.
+Configure `POSTGRES_HOST=localhost` no `.env` nesse modo.
 
-## Validação desta fundação
+## Verificação
 
-Este projeto foi gerado em um ambiente sandbox **sem acesso à internet**, portanto
-os itens abaixo não puderam ser executados/verificados no momento da criação —
-verifique-os no seu ambiente antes de começar a desenvolver:
+Com os containers ativos:
 
-| Item | Status |
-|---|---|
-| Sintaxe Python de todos os arquivos do backend | ✅ Verificado (`python -m py_compile`) |
-| Estrutura de pastas coerente entre `config/settings.py`, apps e `docker-compose.yml` | ✅ Revisado manualmente |
-| Ausência de segredos reais no código (`.env` não versionado, `.env.example` sem valores reais) | ✅ Verificado |
-| `.gitignore` cobre Python/Django/Node/React/Docker/IDEs/`.env` | ✅ Verificado |
-| `pip install -r requirements.txt` executa sem erro | ⚠️ **Não verificado** (sem acesso à internet no ambiente de geração) |
-| `npm install` executa sem erro | ⚠️ **Não verificado** (idem) |
-| `docker compose up --build` sobe os três serviços | ⚠️ **Não verificado** (idem) |
-| Django consegue conectar ao PostgreSQL | ⚠️ **Não verificado** (depende dos itens acima) |
-| `makemigrations` / `migrate` executam sem erro | ⚠️ **Não verificado** (depende do Django estar instalado) |
+```bash
+docker compose exec backend python manage.py check
+docker compose exec backend python manage.py test
+docker compose exec backend python manage.py makemigrations --check --dry-run
+docker compose exec frontend npm run build
+docker compose exec frontend npm run lint
+```
 
-Se algum desses itens falhar no seu ambiente, é o primeiro lugar a investigar — e é
-um ótimo primeiro exercício de debug de configuração real.
+Na verificação de 5 de setembro de 2026, todos esses comandos passaram, com 17
+testes no backend e nenhuma migration pendente.
 
-## Documentação completa
+## Documentação
 
 | Documento | Conteúdo |
 |---|---|
-| [`docs/requirements.md`](docs/requirements.md) | Problema, público-alvo, personas, requisitos, escopo do MVP |
-| [`docs/architecture.md`](docs/architecture.md) | Arquitetura geral, componentes, fluxo de mensagem, decisões |
-| [`docs/database.md`](docs/database.md) | Modelagem das entidades, diagrama ER, justificativas |
-| [`docs/api.md`](docs/api.md) | Contrato da API REST (endpoints, autenticação, erros) |
-| [`docs/roadmap.md`](docs/roadmap.md) | Fases de desenvolvimento com tarefas concretas |
-| [`docs/development-guide.md`](docs/development-guide.md) | Guia de estudo e mapa de navegação do projeto |
+| [`docs/requirements.md`](docs/requirements.md) | problema, requisitos e escopo |
+| [`docs/architecture.md`](docs/architecture.md) | componentes, fronteiras e decisões |
+| [`docs/database.md`](docs/database.md) | entidades, relações e modelagem |
+| [`docs/api.md`](docs/api.md) | contrato atual e planejado da API |
+| [`docs/roadmap.md`](docs/roadmap.md) | progresso e tarefas restantes |
+| [`docs/development-guide.md`](docs/development-guide.md) | mapa do código e orientação |
 
-## Próximos passos
-
-Ver [`docs/roadmap.md`](docs/roadmap.md) — você está terminando a Fase 1 (Setup).
-O próximo passo concreto é validar o ambiente local (seção "Como executar
-localmente" acima) e então gerar as primeiras migrations (Fase 2).
-
-## Licença
-
-Projeto pessoal de estudo/portfólio. Sem licença definida ainda — adicione uma
-(ex. MIT) se e quando o repositório for tornado público.
+O repositório permanece privado durante o desenvolvimento.
