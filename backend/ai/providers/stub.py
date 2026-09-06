@@ -13,11 +13,13 @@ from .base import AIProvider
 
 class StubAIProvider(AIProvider):
     def generate_response(self, *, company_context: str, conversation_history: list[dict], user_message: str) -> str:
-        # Implementação propositalmente simples: ecoa a pergunta e sinaliza que
-        # ainda é uma resposta simulada. O objetivo aqui é validar o fluxo
-        # (mensagem -> contexto -> "IA" -> resposta -> banco), não gerar respostas
-        # inteligentes de verdade — isso é trabalho da Fase 7.
         prefix = "[resposta simulada — provider stub]"
         if company_context:
-            return f"{prefix} Com base nas informações da empresa, aqui está uma resposta para: \"{user_message}\""
-        return f"{prefix} Recebi sua mensagem: \"{user_message}\""
+            return (
+                f"{prefix} Baseado no contexto da empresa \"{company_context}\", "
+                f"sobre \"{user_message}\", posso dizer que esta é uma resposta simulada."
+            )
+        return (
+            f"{prefix} A empresa ainda não informou um contexto. "
+            f"Sobre \"{user_message}\", esta é uma resposta simulada."
+        )
