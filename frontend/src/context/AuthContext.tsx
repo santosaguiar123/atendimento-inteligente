@@ -1,12 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, type ReactNode, useContext, useMemo, useState } from "react";
 
-import { AUTH_TOKEN_STORAGE_KEY } from "../services/api";
-
-const AUTH_USER_STORAGE_KEY = "auth_user";
+import { AUTH_TOKEN_STORAGE_KEY, AUTH_USER_STORAGE_KEY } from "../services/api";
 
 export interface AuthUser {
   email: string;
+  full_name?: string;
 }
 
 interface AuthContextValue {

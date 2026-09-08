@@ -167,3 +167,96 @@ class PublicConversationAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], "Conversa não encontrada.")
+
+
+class CompanyConversationListAPITests(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(email="owner@example.com", password="password")
+        self.other_owner = User.objects.create_user(email="other@example.com", password="password")
+        self.company = Company.objects.create(owner=self.owner, name="Minha Empresa")
+        self.other_company = Company.objects.create(owner=self.other_owner, name="Outra Empresa")
+
+    def test_requires_authentication(self):
+        response = self.client.get(f"/api/companies/{self.company.id}/conversations/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_owner_cannot_list_conversations_of_another_owners_company(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.get(f"/api/companies/{self.other_company.id}/conversations/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_lists_only_conversations_of_the_requested_company(self):
+        conversation = Conversation.objects.create(
+            company=self.company, customer_identifier="Cliente 1"
+        )
+        Conversation.objects.create(company=self.other_company, customer_identifier="Cliente 2")
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.get(f"/api/companies/{self.company.id}/conversations/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual([item["id"] for item in response.data], [str(conversation.id)])
+
+    def test_includes_last_message_preview_and_count(self):
+        conversation = Conversation.objects.create(company=self.company)
+        Message.objects.create(
+            conversation=conversation, sender=Message.Sender.CUSTOMER, content="Primeira"
+        )
+        Message.objects.create(
+            conversation=conversation, sender=Message.Sender.AI, content="Última"
+        )
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.get(f"/api/companies/{self.company.id}/conversations/")
+
+        self.assertEqual(response.data[0]["messages_count"], 2)
+        self.assertEqual(response.data[0]["last_message"]["content"], "Última")
+        self.assertEqual(response.data[0]["last_message"]["sender"], Message.Sender.AI)
+
+    def test_conversation_with_no_messages_has_null_last_message(self):
+        Conversation.objects.create(company=self.company)
+        self.client.force_authenticate(self.owner)
+
+        response = self.client.get(f"/api/companies/{self.company.id}/conversations/")
+
+        self.assertEqual(response.data[0]["messages_count"], 0)
+        self.assertIsNone(response.data[0]["last_message"])
+
+
+class ConversationStatusUpdateAPITests(APITestCase):
+    def setUp(self):
+        self.owner = User.objects.create_user(email="owner@example.com", password="password")
+        self.other_owner = User.objects.create_user(email="other@example.com", password="password")
+        self.company = Company.objects.create(owner=self.owner, name="Minha Empresa")
+        self.conversation = Conversation.objects.create(company=self.company)
+
+    def test_owner_can_mark_conversation_as_closed(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.patch(
+            f"/api/conversations/{self.conversation.id}/status/",
+            {"status": Conversation.Status.CLOSED},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.conversation.refresh_from_db()
+        self.assertEqual(self.conversation.status, Conversation.Status.CLOSED)
+
+    def test_other_owner_cannot_update_status(self):
+        self.client.force_authenticate(self.other_owner)
+        response = self.client.patch(
+            f"/api/conversations/{self.conversation.id}/status/",
+            {"status": Conversation.Status.CLOSED},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.conversation.refresh_from_db()
+        self.assertEqual(self.conversation.status, Conversation.Status.OPEN)
+
+    def test_invalid_status_value_is_rejected(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.patch(
+            f"/api/conversations/{self.conversation.id}/status/",
+            {"status": "INVALIDO"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

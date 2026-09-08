@@ -1,16 +1,22 @@
 import logging
 import uuid
 
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, ValidationError
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from ai import services as ai_services
 from companies.models import Company
 
 from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer
+from .serializers import (
+    ConversationSerializer,
+    ConversationStatusSerializer,
+    ConversationSummarySerializer,
+    MessageSerializer,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -98,3 +104,37 @@ class MessageListCreateView(generics.ListCreateAPIView):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class CompanyConversationListView(generics.ListAPIView):
+    """
+    GET /api/companies/{company_id}/conversations/ — usado pelo painel da empresa.
+
+    Só o dono da empresa pode listar; uma empresa de outro dono (ou inexistente)
+    responde 404, para não revelar se o UUID existe (mesmo padrão usado em
+    companies.views.CompanyDetailView).
+    """
+
+    serializer_class = ConversationSummarySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        company = get_object_or_404(
+            Company, pk=self.kwargs["company_id"], owner=self.request.user
+        )
+        return Conversation.objects.filter(company=company).order_by("-updated_at")
+
+
+class ConversationStatusUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/conversations/{id}/status/ — a empresa marca uma conversa como
+    resolvida (`CLOSED`) ou reabre (`OPEN`). Só o dono da empresa dona da
+    conversa pode fazer isso.
+    """
+
+    serializer_class = ConversationStatusSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["patch", "head", "options"]
+
+    def get_queryset(self):
+        return Conversation.objects.filter(company__owner=self.request.user)
