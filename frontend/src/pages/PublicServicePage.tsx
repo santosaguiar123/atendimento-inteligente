@@ -34,6 +34,7 @@ export function PublicServicePage() {
   const [notFound, setNotFound] = useState(false);
   const [error, setError] = useState("");
   const threadRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -86,6 +87,15 @@ export function PublicServicePage() {
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight });
   }, [messages]);
+  useEffect(() => {
+    const input = messageInputRef.current;
+    if (!input) return;
+
+    input.style.height = "auto";
+    const maxHeight = Number.parseFloat(window.getComputedStyle(input).maxHeight);
+    input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`;
+    input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [messageText]);
 
   async function startConversation() {
     if (!slug || isStarting) return;
@@ -230,10 +240,11 @@ export function PublicServicePage() {
               <form onSubmit={sendMessage}>
                 <div className="reply-input-row" style={{ padding: 0 }}>
                   <textarea
+                    ref={messageInputRef}
                     value={messageText}
                     onChange={(event) => setMessageText(event.target.value)}
                     disabled={isSending}
-                    rows={2}
+                    rows={1}
                     placeholder="Escreva sua mensagem..."
                   />
                   <button type="submit" className="btn btn-primary" disabled={isSending}>

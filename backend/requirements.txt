@@ -10,3 +10,6 @@ python-dotenv==1.0.1
 
 # CORS entre frontend (porta 5173) e backend (porta 8000) em desenvolvimento
 django-cors-headers==4.4.0
+
+# Cliente compatível usado para acessar a API gratuita do OpenRouter
+openai>=1.66.0,<3.0.0
