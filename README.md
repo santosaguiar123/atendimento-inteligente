@@ -64,8 +64,7 @@ determinados pelo serviço externo. Configuração completa em
 [Integração OpenRouter](docs/openrouter.md).
 
 Quem clona o repositório pode testar com stub ou com sua própria chave.
-Para visitantes testarem apenas pelo navegador, disponibilize uma instância
-pública com a chave configurada no servidor. Eles não precisam receber a chave.
+Para visitantes testarem apenas pelo navegador, nas fases futuras será disponibilizada uma instância pública com a chave configurada no servidor.
 
 ## Produção
 

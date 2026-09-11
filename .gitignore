@@ -20,6 +20,7 @@ npm-debug.log*
 .env
 .env.*
 !.env.example
+.env.production
 
 # --- Docker ---
 # (nenhum arquivo específico a ignorar além dos já cobertos acima)
