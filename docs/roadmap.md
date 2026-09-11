@@ -26,10 +26,10 @@ não significa publicação na internet nem disponibilidade de um provedor exter
 - [ ] Validar cadastro, login, empresa e resposta real na URL pública.
 - [ ] Definir backup e testar restauração.
 - [ ] Configurar logs, acompanhamento de falhas e limites de uso.
-- [ ] Revisar dependências backend e limitações em [Segurança](security.md).
+- [ ] Revisar dependências backend e limitações em [Segurança](security-guide.md).
 
 As quatro entradas da auditoria anterior do frontend foram tratadas com
-atualização de Vite, esbuild e React Router. Veja [Segurança](security.md).
+atualização de Vite, esbuild e React Router. Veja [Segurança](security-guide.md).
 
 ## Melhorias funcionais e técnicas
 

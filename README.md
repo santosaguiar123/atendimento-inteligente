@@ -16,7 +16,7 @@ stub ou OpenRouter, persistência, testes e imagens de produção. Deploy públi
 - Desenvolvimento: Django runserver e Vite, com atualização automática.
 - Produção: Gunicorn, frontend compilado e Nginx, em Compose separado.
 - Suíte do backend: 44 testes; integração externa substituída por mocks.
-- Dependências frontend corrigidas; detalhes em [Segurança](docs/security.md).
+- Dependências frontend corrigidas; detalhes no [guia de segurança](docs/security-guide.md).
 
 ## Executar em desenvolvimento
 
@@ -95,7 +95,7 @@ Consulte [Testes](docs/testing.md) para cobertura e limites da validação.
 | [API](docs/api.md) | endpoints e contratos HTTP |
 | [Desenvolvimento](docs/development-guide.md) | organização, comandos e diagnóstico |
 | [OpenRouter](docs/openrouter.md) | respostas simuladas/reais e configuração |
-| [Segurança](docs/security.md) | auditoria e limitações atuais |
+| [Segurança](docs/security-guide.md) | proteções, riscos conhecidos e checklist de deploy |
 | [Roadmap](docs/roadmap.md) | etapas concluídas e próximas entregas |
 
-`PROJECT_CONTEXT.md` é um resumo operacional local, ignorado pelo Git.
+`PROJECT_CONTEXT.md` resume as decisões técnicas e o estado atual do projeto.

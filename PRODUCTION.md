@@ -112,7 +112,7 @@ na infraestrutura e no Django antes da publicação.
 
 Defina também backup/restauração do banco, limites de uso do canal público e
 monitoramento. O projeto ainda tem limitações descritas em
-[Segurança](docs/security.md). Publicar a instância permite que visitantes usem
+[Segurança](docs/security-guide.md). Publicar a instância permite que visitantes usem
 o produto sem instalar ferramentas nem possuir chave OpenRouter.
 
 ## Validação local
@@ -124,7 +124,7 @@ Ausência de chave Django, hosts ou senha bloqueou a configuração de produçã
 DEBUG permaneceu False sem variável definida. Esses testes usaram as credenciais
 locais já existentes, sem configurar credenciais definitivas de publicação.
 
-Veja [Testes](docs/testing.md) e [Segurança](docs/security.md) para a validação
+Veja [Testes](docs/testing.md) e [Segurança](docs/security-guide.md) para a validação
 das dependências atualizadas.
 
 Apos atualizar o frontend: auditoria npm sem alertas, build e lint aprovados;

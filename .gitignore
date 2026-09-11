@@ -39,6 +39,3 @@ htmlcov/
 
 # artefatos locais
 output/
-
-# Contexto operacional do projeto (não versionar)
-PROJECT_CONTEXT.md

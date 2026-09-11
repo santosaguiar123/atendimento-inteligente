@@ -47,7 +47,7 @@ restritos ao processo; os filtros no codigo de producao permanecem intactos.
 
 Após a atualização das dependências em 10/09/2026, npm audit retornou zero alertas
 reportados e npm run build e npm run lint passaram. A auditoria detalhada está em
-[Segurança](security.md). Não há suíte permanente de testes de navegador no projeto.
+[Segurança](security-guide.md). Não há suíte permanente de testes de navegador no projeto.
 
 Comandos de desenvolvimento:
 
