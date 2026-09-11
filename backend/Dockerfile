@@ -1,8 +1,5 @@
-# Imagem de desenvolvimento do backend.
-# Objetivo: ambiente reproduzível para rodar o servidor de desenvolvimento do
-# Django dentro do Docker Compose (ver docker-compose.yml na raiz do projeto).
-# Um Dockerfile de produção (com gunicorn, sem código montado como volume, etc.)
-# é tarefa da Fase 9 do roadmap — não faz parte do MVP.
+# Desenvolvimento: servidor Django runserver.
+# Producao: Dockerfile.prod usa Gunicorn e collectstatic.
 
 FROM python:3.12-slim
 

@@ -1,6 +1,7 @@
-# components/
+# Componentes
 
-Componentes de UI **reutilizáveis** e sem conhecimento de rota (ex.: um balão de
-mensagem de chat, um formulário de empresa, um botão). Um component não deve
-fazer chamadas diretas de rota/navegação — isso é responsabilidade da page que o
-usa.
+ProtectedRoute controla a navegação para a área autenticada.
+O diretório dashboard contém CompanySidebar, CompanyForm, ConversationList
+e ConversationThread. Eles apresentam empresas, formulários e histórico;
+DashboardPage coordena estado e chamadas HTTP. Não há envio manual de
+mensagens pelo administrador implementado.

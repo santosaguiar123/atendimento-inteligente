@@ -1,6 +1,5 @@
-# hooks/
+# Hooks
 
-Hooks customizados que encapsulam lógica reutilizável com estado (ex.:
-`useAuth()`, `useConversation()`). Criar um hook só compensa quando a mesma
-lógica é usada em mais de um lugar — evite criar hooks "por padrão" para lógica
-usada uma única vez.
+Diretório reservado para hooks reutilizáveis. Atualmente useAuth é exportado
+por context/AuthContext.tsx; os efeitos e estados específicos das telas ficam
+nas respectivas páginas. Não há outros hooks próprios neste diretório.

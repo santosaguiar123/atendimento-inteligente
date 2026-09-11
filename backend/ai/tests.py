@@ -9,6 +9,11 @@ from .providers.stub import StubAIProvider
 
 
 class OpenRouterProviderTests(SimpleTestCase):
+    def setUp(self):
+        env = patch.dict('os.environ', {'OPENROUTER_MODEL': 'openrouter/free', 'OPENROUTER_MAX_TOKENS': '350', 'OPENROUTER_TIMEOUT_SECONDS': '45'})
+        env.start()
+        self.addCleanup(env.stop)
+
     @patch("ai.providers.openrouter.OpenAI")
     def test_uses_company_context_history_and_customer_message(self, mock_client_class):
         client = MagicMock()
@@ -100,7 +105,27 @@ class AIProviderSelectionTests(SimpleTestCase):
     def test_selects_openrouter_provider(self, mock_client_class):
         with patch.dict(
             "os.environ",
-            {"AI_PROVIDER": "openrouter", "OPENROUTER_API_KEY": "test-key"},
+            {"AI_PROVIDER": "openrouter", "OPENROUTER_API_KEY": "test-key", "OPENROUTER_MODEL": "openrouter/free", "OPENROUTER_MAX_TOKENS": "350", "OPENROUTER_TIMEOUT_SECONDS": "45"},
             clear=False,
         ):
             self.assertIsInstance(services._build_provider(), OpenRouterProvider)
+
+
+class AIServiceTests(SimpleTestCase):
+    @patch("ai.services._build_provider")
+    def test_service_forwards_context_history_and_message(self, build_provider):
+        build_provider.return_value.generate_response.return_value = "Resposta"
+        payload = {"company_context": "Contexto", "conversation_history": [{"sender": "CUSTOMER", "content": "Antes"}], "user_message": "Agora"}
+        self.assertEqual(services.get_ai_response(**payload), "Resposta")
+        build_provider.return_value.generate_response.assert_called_once_with(**payload)
+
+    def test_stub_response_uses_context_and_message_without_network(self):
+        with patch.dict("os.environ", {"AI_PROVIDER": "stub"}):
+            answer = services.get_ai_response(company_context="Abre as 9h", conversation_history=[], user_message="Horario?")
+        self.assertIn("Abre as 9h", answer)
+        self.assertIn("Horario?", answer)
+
+    def test_unknown_provider_is_rejected(self):
+        with patch.dict("os.environ", {"AI_PROVIDER": "inexistente"}):
+            with self.assertRaises(ValueError):
+                services._build_provider()

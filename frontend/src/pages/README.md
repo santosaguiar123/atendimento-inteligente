@@ -1,9 +1,11 @@
-# pages/
+# Páginas
 
-Cada arquivo aqui representa uma **tela completa** roteada pelo React Router
-(ex.: `Login.tsx`, `Dashboard.tsx`, `AtendimentoPublico.tsx`) — ver Fase 6 do
-roadmap em `docs/roadmap.md`.
+- HomePage: página inicial em /.
+- RegisterPage: cadastro em /cadastro.
+- LoginPage: autenticação em /login.
+- DashboardPage: empresas, contexto, conversas e status em /dashboard.
+- PublicServicePage: canal anônimo em /atendimento/:slug.
 
-Uma página compõe componentes de `src/components/` e chama a API através de
-`src/services/`. Regra prática: se o conteúdo tem sua própria rota/URL, é uma
-page; se é reutilizado dentro de páginas diferentes, é um component.
+As rotas ficam em App.tsx. ProtectedRoute protege o dashboard; chamadas HTTP
+usam services/api.ts. O canal público restaura o UUID da conversa por empresa
+no localStorage e busca o histórico após cada envio bem-sucedido.

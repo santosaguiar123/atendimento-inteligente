@@ -1,5 +1,6 @@
-# context/
+# Contextos
 
-Estado global leve, como o contexto de autenticação (`AuthContext`, Fase 6 do
-roadmap). Para o tamanho deste projeto, a Context API do próprio React é
-suficiente — não há necessidade de Redux/Zustand/etc.
+AuthContext.tsx fornece token, usuário, login e logout por useAuth.
+Os dados são persistidos no localStorage; logout remove a sessão local,
+sem revogar o token no servidor. ProtectedRoute usa o contexto para controlar
+o acesso ao dashboard. A autorização real dos recursos é aplicada no backend.

@@ -1,156 +1,79 @@
-# Atendimento Inteligente
+# Atendimento Inteligente — Resolvi
 
-Plataforma web de atendimento automatizado para pequenas e médias empresas. O
-administrador cadastra o contexto do negócio e disponibiliza um canal público no
-qual clientes conversam com um assistente de IA preparado para responder perguntas
-recorrentes.
-
-Projeto em desenvolvimento, usado como exercício prático de arquitetura, API REST,
-frontend, persistência, testes, containers e integração com IA.
+Aplicação de atendimento automatizado para pequenas empresas. O administrador
+cadastra o negócio e seu contexto, compartilha o canal público e acompanha as
+conversas. O cliente conversa sem criar conta.
 
 ## Estado atual
 
-O backend do fluxo anterior à IA já está funcional:
+Implementadas as funcionalidades das Fases 0–9: cadastro/login, empresas isoladas
+por proprietário, painel de conversas, canal público, respostas automáticas com
+stub ou OpenRouter, persistência, testes e imagens de produção. Deploy público
+é a próxima etapa; não há endereço público configurado no repositório.
 
-- ambiente local com PostgreSQL, Django e Vite via Docker Compose;
-- registro e login do administrador por token;
-- criação, listagem e edição de empresas, isoladas por proprietário;
-- consulta pública de empresa por slug, sem exposição do contexto interno;
-- criação de conversas e listagem/criação de mensagens do cliente;
-- migrations aplicadas e sem alterações pendentes;
-- 17 testes automatizados passando;
-- verificação do Django, build e lint do frontend passando.
+- Backend: Python 3.12, Django 5.0.6, DRF e PostgreSQL 16.
+- Frontend: React 18, TypeScript, Vite 7 e React Router 7.
+- Desenvolvimento: Django runserver e Vite, com atualização automática.
+- Produção: Gunicorn, frontend compilado e Nginx, em Compose separado.
+- Suíte do backend: 44 testes; integração externa substituída por mocks.
+- Dependências frontend corrigidas; detalhes em [Segurança](docs/security.md).
 
-O próximo marco é concluir a Fase 5: conectar o envio de mensagens à camada de IA e
-persistir a resposta automática. O frontend ainda é a tela inicial da fundação. As
-tarefas restantes estão em [`docs/roadmap.md`](docs/roadmap.md).
+## Executar em desenvolvimento
 
-## Problema e objetivo
+Requisito: Docker com Docker Compose. Não é necessário instalar PostgreSQL,
+Python ou Node no computador para usar os containers.
 
-Pequenos negócios recebem diariamente as mesmas perguntas: horários, formas de
-pagamento, prazos e políticas. A plataforma automatiza essa primeira camada usando
-o contexto cadastrado pela empresa, sem exigir o treino de um modelo próprio.
-
-O MVP não pretende substituir definitivamente o atendimento humano. Seu foco é
-validar um canal para perguntas frequentes que possa evoluir para um modelo híbrido.
-Consulte [`docs/requirements.md`](docs/requirements.md).
-
-## Escopo do MVP
-
-Incluído:
-
-- cadastro e login de administrador;
-- cadastro e edição de empresas com contexto para a IA;
-- canal público identificado por slug;
-- conversa entre cliente e IA com persistência no banco;
-- ambiente local reproduzível com Docker Compose.
-
-Atendimento humano, analytics, múltiplos administradores, notificações, integrações
-externas e billing ficam fora do MVP.
-
-## Stack
-
-| Camada | Tecnologia |
-|---|---|
-| Backend | Python 3.12, Django 5 e Django REST Framework |
-| Banco | PostgreSQL 16 |
-| Frontend | React 18, TypeScript e Vite 5 |
-| Comunicação | HTTP, REST e JSON |
-| Ambiente | Docker e Docker Compose |
-| IA | interface própria com provider substituível |
-
-As decisões estão explicadas em [`docs/architecture.md`](docs/architecture.md).
-
-## Arquitetura
-
-```text
-React + TypeScript (porta 5173)
-        | HTTP / REST / JSON
-        v
-Django REST Framework (porta 8000)
-        | Django ORM
-        v
-PostgreSQL (porta 5432)
-
-Django -> camada ai -> provider stub ou provider externo
-```
-
-É um monólito modular, sem microsserviços, Kubernetes ou fila no MVP.
-
-## Estrutura
-
-```text
-atendimento-inteligente/
-├── backend/
-│   ├── config/            # configuração e rotas raiz
-│   ├── users/             # usuário, registro e login
-│   ├── companies/         # empresas e canal público
-│   ├── conversations/     # conversas e mensagens
-│   └── ai/                # abstração do provider
-├── frontend/src/          # interface, serviços e tipos
-├── docs/                  # documentação do produto e do código
-├── docker-compose.yml
-└── .env.example
-```
-
-## Como executar localmente
-
-Pré-requisitos: Docker com Docker Compose. Para rodar sem containers, use Python
-3.12+, Node.js 20+ e PostgreSQL.
-
-1. Crie a configuração local:
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   No PowerShell: `Copy-Item .env.example .env`.
-
-2. Ajuste `DJANGO_SECRET_KEY` e `POSTGRES_PASSWORD`.
-
-3. Suba e prepare o ambiente:
-
-   ```bash
-   docker compose up --build
-   docker compose exec backend python manage.py migrate
-   ```
-
-4. Opcionalmente, crie um superusuário:
-
-   ```bash
-   docker compose exec backend python manage.py createsuperuser
-   ```
-
-Acessos locais:
-
-- frontend: http://localhost:5173
-- API: http://localhost:8000/api/
-- diagnóstico: http://localhost:8000/api/auth/ping/
-- Django Admin: http://localhost:8000/admin/
-
-### Sem Docker
+1. Copie `.env.example` para `.env` (PowerShell: `Copy-Item .env.example .env`).
+   Se o arquivo já existe, ajuste-o sem sobrescrever seus valores.
+2. Configure `DJANGO_SECRET_KEY` e `POSTGRES_PASSWORD` com valores próprios.
+   Mantenha `DJANGO_DEBUG=True` e os hosts locais.
+3. Execute:
 
 ```bash
-# backend
-cd backend
-python -m venv .venv
-# Linux/macOS: source .venv/bin/activate
-# Windows PowerShell: .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py runserver
-
-# frontend, em outro terminal
-cd frontend
-npm install
-npm run dev
+docker compose up -d --build
+docker compose exec backend python manage.py migrate
 ```
 
-Configure `POSTGRES_HOST=localhost` no `.env` nesse modo.
+Acesse http://localhost:5173. API: http://localhost:8000/api/;
+ping: http://localhost:8000/api/auth/ping/; admin: http://localhost:8000/admin/.
 
-## Verificação
+O PostgreSQL é instalado dentro do container. Em um volume vazio, ele cria o banco
+e o usuário de `POSTGRES_DB`/`POSTGRES_USER` com a senha `POSTGRES_PASSWORD`.
+Em um volume já inicializado, alterar essa variável não troca a senha existente.
+Consulte [Produção](PRODUCTION.md) para configuração e persistência.
 
-Com os containers ativos:
+## Testar o produto
+
+1. Abra `/cadastro`, crie uma conta e faça login em `/login`.
+2. Em `/dashboard`, cadastre uma empresa e preencha seu contexto de atendimento.
+3. Abra o link `/atendimento/<slug>`, inicie a conversa e envie uma pergunta.
+4. Volte ao painel para consultar mensagens e marcar a conversa como resolvida
+   ou reaberta. O painel não envia respostas manuais.
+
+Com `AI_PROVIDER=stub`, o fluxo funciona sem chave externa, com resposta simulada.
+Para respostas reais, defina `AI_PROVIDER=openrouter` e `OPENROUTER_API_KEY`.
+O provider aceita `openrouter/free` ou modelos terminados em `:free`.
+Após alterar o ambiente:
+
+```bash
+docker compose up -d --force-recreate backend
+```
+
+A chave é usada apenas pelo backend. Disponibilidade e limites dos modelos são
+determinados pelo serviço externo. Configuração completa em
+[Integração OpenRouter](docs/openrouter.md).
+
+Quem clona o repositório pode testar com stub ou com sua própria chave.
+Para visitantes testarem apenas pelo navegador, disponibilize uma instância
+pública com a chave configurada no servidor. Eles não precisam receber a chave.
+
+## Produção
+
+Siga [PRODUCTION.md](PRODUCTION.md) para configurar `.env.production`, construir
+as imagens, aplicar migrations e subir http://localhost:8080.
+O Compose de produção usa banco e volumes separados do desenvolvimento.
+
+## Verificações
 
 ```bash
 docker compose exec backend python manage.py check
@@ -158,20 +81,22 @@ docker compose exec backend python manage.py test
 docker compose exec backend python manage.py makemigrations --check --dry-run
 docker compose exec frontend npm run build
 docker compose exec frontend npm run lint
+docker compose exec frontend npm audit
 ```
 
-Na verificação de 5 de setembro de 2026, todos esses comandos passaram, com 17
-testes no backend e nenhuma migration pendente.
+Consulte [Testes](docs/testing.md) para cobertura e limites da validação.
 
 ## Documentação
 
 | Documento | Conteúdo |
 |---|---|
-| [`docs/requirements.md`](docs/requirements.md) | problema, requisitos e escopo |
-| [`docs/architecture.md`](docs/architecture.md) | componentes, fronteiras e decisões |
-| [`docs/database.md`](docs/database.md) | entidades, relações e modelagem |
-| [`docs/api.md`](docs/api.md) | contrato atual e planejado da API |
-| [`docs/roadmap.md`](docs/roadmap.md) | progresso e tarefas restantes |
-| [`docs/development-guide.md`](docs/development-guide.md) | mapa do código e orientação |
+| [Requisitos](docs/requirements.md) | funcionalidades e escopo |
+| [Arquitetura](docs/architecture.md) | componentes e fluxo de mensagens |
+| [Banco](docs/database.md) | entidades, relações e persistência |
+| [API](docs/api.md) | endpoints e contratos HTTP |
+| [Desenvolvimento](docs/development-guide.md) | organização, comandos e diagnóstico |
+| [OpenRouter](docs/openrouter.md) | respostas simuladas/reais e configuração |
+| [Segurança](docs/security.md) | auditoria e limitações atuais |
+| [Roadmap](docs/roadmap.md) | etapas concluídas e próximas entregas |
 
-O repositório permanece privado durante o desenvolvimento.
+`PROJECT_CONTEXT.md` é um resumo operacional local, ignorado pelo Git.

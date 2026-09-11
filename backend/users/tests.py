@@ -64,3 +64,18 @@ class AuthenticationAPITests(APITestCase):
         response = ProtectedTestView.as_view()(request)
 
         self.assertEqual(response.status_code, 401)
+
+
+class UserModelTests(APITestCase):
+    def test_user_normalizes_email_and_hashes_password(self):
+        user = User.objects.create_user(email="admin@EXAMPLE.COM", password="secret")
+        user.refresh_from_db()
+        self.assertEqual(user.email, "admin@example.com")
+        self.assertNotEqual(user.password, "secret")
+        self.assertTrue(user.check_password("secret"))
+        self.assertTrue(user.is_active)
+        self.assertFalse(user.is_staff)
+
+    def test_email_is_required(self):
+        with self.assertRaises(ValueError):
+            User.objects.create_user(email="", password="secret")

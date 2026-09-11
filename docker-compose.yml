@@ -1,6 +1,6 @@
 # Orquestra os três componentes descritos em docs/architecture.md: banco, backend
 # e frontend, para desenvolvimento local. Não é uma configuração de produção
-# (ver docs/roadmap.md, Fase 9, para o que muda em produção).
+# (ver docker-compose.prod.yml e PRODUCTION.md para producao).
 
 services:
   db:

@@ -37,7 +37,8 @@ class PublicConversationAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data["detail"], "Empresa não encontrada.")
 
-    def test_forged_sender_is_saved_as_customer(self):
+    @patch("conversations.views.ai_services.get_ai_response", return_value="Resposta mockada")
+    def test_forged_sender_is_saved_as_customer(self, mock_get_ai_response):
         conversation = Conversation.objects.create(company=self.company)
         response = self.client.post(
             f"/api/conversations/{conversation.id}/messages/",
@@ -260,3 +261,72 @@ class ConversationStatusUpdateAPITests(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class PersistenceModelTests(APITestCase):
+    def test_relationships_defaults_and_cascade_deletion(self):
+        owner = User.objects.create_user(email="model@example.com", password="secret")
+        company = Company.objects.create(owner=owner, name="Empresa Model")
+        conversation = Conversation.objects.create(company=company)
+        message = Message.objects.create(conversation=conversation, sender=Message.Sender.CUSTOMER, content="Ola")
+        company.refresh_from_db()
+        conversation.refresh_from_db()
+        message.refresh_from_db()
+        self.assertEqual(list(owner.companies.all()), [company])
+        self.assertEqual(list(company.conversations.all()), [conversation])
+        self.assertEqual(list(conversation.messages.all()), [message])
+        self.assertEqual(conversation.status, Conversation.Status.OPEN)
+        self.assertEqual(conversation.customer_identifier, "")
+        for obj in (owner, company, conversation, message):
+            self.assertIsInstance(obj.pk, uuid.UUID)
+        self.assertIsNotNone(message.created_at)
+        owner.delete()
+        self.assertFalse(Company.objects.exists())
+        self.assertFalse(Conversation.objects.exists())
+        self.assertFalse(Message.objects.exists())
+
+
+class EndToEndAPITests(APITestCase):
+    @patch("conversations.views.ai_services.get_ai_response", return_value="Abrimos as 9h.")
+    def test_register_login_company_public_conversation_and_ai_reply(self, mock_ai):
+        credentials = {"email": "e2e@example.com", "password": "Senha-forte-123!"}
+        response = self.client.post("/api/auth/register/", {**credentials, "full_name": "Dono"}, format="json")
+        self.assertEqual(response.status_code, 201)
+        self.assertNotIn("password", response.data)
+        response = self.client.post("/api/auth/login/", credentials, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {response.data['token']}")
+        response = self.client.post("/api/companies/", {"name": "Empresa E2E", "ai_context": "Abrimos as 9h."}, format="json")
+        self.assertEqual(response.status_code, 201)
+        company = Company.objects.get(pk=response.data["id"])
+        self.assertEqual(company.owner.email, credentials["email"])
+        self.client.credentials()
+        response = self.client.get(f"/api/public/companies/{company.slug}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["name"], company.name)
+        response = self.client.post(f"/api/public/companies/{company.slug}/conversations/", {"customer_identifier": "Cliente"}, format="json")
+        self.assertEqual(response.status_code, 201)
+        conversation = Conversation.objects.get(pk=response.data["id"])
+        self.assertEqual(conversation.company, company)
+        url = f"/api/conversations/{conversation.id}/messages/"
+        response = self.client.post(url, {"content": "Quando abre?"}, format="json")
+        self.assertEqual(response.status_code, 201)
+        mock_ai.assert_called_once_with(company_context="Abrimos as 9h.", conversation_history=[], user_message="Quando abre?")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        expected = [("CUSTOMER", "Quando abre?"), ("AI", "Abrimos as 9h.")]
+        self.assertEqual([(item["sender"], item["content"]) for item in response.data], expected)
+        self.assertEqual(list(conversation.messages.values_list("sender", "content")), expected)
+
+    @patch("conversations.views.ai_services.get_ai_response")
+    def test_invalid_content_never_persists_or_calls_ai(self, mock_ai):
+        owner = User.objects.create_user(email="empty@example.com", password="secret")
+        company = Company.objects.create(owner=owner, name="Empresa")
+        conversation = Conversation.objects.create(company=company)
+        for payload in ({}, {"content": ""}, {"content": " \n\t "}, {"content": None}):
+            with self.subTest(payload=payload):
+                response = self.client.post(f"/api/conversations/{conversation.id}/messages/", payload, format="json")
+                self.assertEqual(response.status_code, 400)
+                self.assertIn("content", response.data)
+        self.assertFalse(conversation.messages.exists())
+        mock_ai.assert_not_called()

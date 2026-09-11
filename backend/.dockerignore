@@ -7,3 +7,7 @@ venv/
 db.sqlite3
 .git/
 .pytest_cache/
+
+.env.*
+!.env.example
+staticfiles/

@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -31,17 +32,21 @@ def env_bool(name: str, default: bool) -> bool:
 # Segurança básica
 # ---------------------------------------------------------------------------
 
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    # Fallback SOMENTE para permitir rodar comandos locais sem configurar nada.
-    # Nunca usar este valor em produção — sempre definir DJANGO_SECRET_KEY no .env.
-    "django-insecure-dev-key-troque-isto-em-producao",
-)
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "").strip()
+if not SECRET_KEY:
+    raise ImproperlyConfigured("Defina DJANGO_SECRET_KEY no ambiente.")
 
-DEBUG = env_bool("DJANGO_DEBUG", True)
+DEBUG = env_bool("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
-
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
+    if host.strip()
+]
+if not DEBUG and (not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS):
+    raise ImproperlyConfigured("Defina DJANGO_ALLOWED_HOSTS com hosts explicitos.")
+if not DEBUG and not os.environ.get("POSTGRES_PASSWORD", "").strip():
+    raise ImproperlyConfigured("Defina POSTGRES_PASSWORD no ambiente.")
 # ---------------------------------------------------------------------------
 # Apps
 # ---------------------------------------------------------------------------
@@ -106,7 +111,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": os.environ.get("POSTGRES_DB", "atendimento"),
         "USER": os.environ.get("POSTGRES_USER", "atendimento"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", "atendimento"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
         "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
@@ -142,9 +147,9 @@ REST_FRAMEWORK = {
 # CORS (frontend em dev roda em outra porta/origem)
 # ---------------------------------------------------------------------------
 
-CORS_ALLOWED_ORIGINS = os.environ.get(
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.environ.get(
     "CORS_ALLOWED_ORIGINS", "http://localhost:5173"
-).split(",")
+).split(",") if origin.strip()]
 
 # ---------------------------------------------------------------------------
 # Internacionalização
@@ -159,6 +164,7 @@ USE_TZ = True
 # Arquivos estáticos
 # ---------------------------------------------------------------------------
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
